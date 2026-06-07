@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Operit 运行时数据（机器相关）
+.operit/
+.backup/
+
+# 运行持久化数据（机器相关，不提交）
+keeper_ports.txt
+keeper_history.json
+
+# 日志文件
+*.log
+*.log.*
+
+# 备份文件
+*.bak
+*.bak2
+*.bak3

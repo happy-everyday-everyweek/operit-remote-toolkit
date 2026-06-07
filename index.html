@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI 聊天</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="error-display" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a0000;color:#f88;padding:8px 12px;font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-all;max-height:60%;overflow:auto;border-bottom:2px solid #f44"></div>
+<div id="chat-page">
+  <div id="top-bar">
+    <div id="chat-title">对话列表</div>
+    <button id="new-chat-btn">+ 新建</button>
+  </div>
+  <div id="messages"><div id="status">连接中...</div></div>
+  <div id="input-area">
+    <textarea id="msg-input" rows="1" placeholder="输入消息 (/tool 打开工具箱)" disabled></textarea>
+    <button id="send-btn" disabled>发送</button>
+  </div>
+  <!-- 斜杠命令提示面板 -->
+  <div id="slash-hint">
+    <div class="slash-item" data-command="/tool">
+      <span style="font-weight:bold">/</span>
+      <div><div class="name">/tool</div><div class="desc">打开工具箱（计算器 + 浏览器）</div></div>
+    </div>
+  </div>
+<div id="chat-list-overlay">
+  <div id="chat-list-bg"></div>
+  <div id="chat-list-panel">
+    <div class="panel-title">切换对话</div>
+    <div id="chat-list-content"></div>
+  </div>
+</div>
+<div id="split-overlay">
+  <div class="split-toolbar">
+    <span class="split-title">加载中...</span>
+    <button class="split-close">✕</button>
+  </div>
+  <div class="split-frame">
+    <pre id="split-code" class="split-code" style="display:none"></pre>
+    <iframe id="split-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" loading="lazy" referrerpolicy="no-referrer" style="display:none"></iframe>
+  </div>
+</div>
+<script>var BASE='http://'+location.hostname+':8094';var TOKEN='b1a9f1e4f24742deb5bd1fa9afe97179';
+var errDiv=document.getElementById('error-display');
+window.onerror=function(msg,src,line,col,err){errDiv.style.display='block';errDiv.textContent+='[JS] '+msg+' at '+src+':'+line+'\n'};
+window.addEventListener('unhandledrejection',function(e){errDiv.style.display='block';errDiv.textContent+='[PROMISE] '+e.reason+'\n'});
+</script>
+<script src="js/api.js" onerror="errDiv.style.display='block';errDiv.textContent+='[LOAD] js/api.js 加载失败\n'"></script>
+<script src="js/render.js" onerror="errDiv.style.display='block';errDiv.textContent+='[LOAD] js/render.js 加载失败\n'"></script>
+<script src="js/split.js" onerror="errDiv.style.display='block';errDiv.textContent+='[LOAD] js/split.js 加载失败\n'"></script>
+<script src="js/chat.js?v=2" onerror="errDiv.style.display='block';errDiv.textContent+='[LOAD] js/chat.js 加载失败\n'"></script>
+</body>
+</html>

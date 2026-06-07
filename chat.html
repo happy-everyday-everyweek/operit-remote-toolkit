@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>聊天</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;border:none}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',sans-serif;font-size:15px;background:#0f0f0f;color:#d4d4d4}
+
+#top-bar{border-bottom-color:#e0e0e0}
+#chat-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666}
+#messages .msg .time{color:#aaa}
+.msg pre,.msg code{background:#f0f0f0;border-color:#ddd}
+.msg blockquote{border-left-color:#ccc;color:#888}
+#input-area{display:flex;align-items:center;border:none;border-top-color:#e0e0e0}
+#msg-input::placeholder{color:#bbb}
+#send-btn{color:#000}
+#chat-list-overlay #chat-list-bg{background:rgba(200,200,200,.4)}
+#chat-list-overlay #chat-list-panel{background:#f5f5f5}
+#chat-list-panel .panel-title{color:#999}
+.chat-item{color:#000}
+.chat-item:hover{background:#e8e8e8}
+.chat-item.active{color:#1a73e8}
+.chat-item .del-btn{color:#999}
+#status{color:#999}
+#load-more{color:#999}
+::-webkit-scrollbar-thumb{background:#ccc}.msg.user{color:#000}.chat-item .del-btn{color:#ccc}}
+input,button,textarea{font-size:inherit;font-family:inherit;outline:none;border:none;background:none;color:inherit}
+#chat-page{display:flex;flex-direction:column;height:100%}
+#top-bar{display:flex;align-items:center;padding:8px 12px;min-height:36px}
+#chat-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#999;font-size:13px;cursor:pointer;flex:1}
+#chat-title:hover{color:#bbb}
+#new-chat-btn{color:#d4d4d4;font-size:13px;cursor:pointer;padding:2px 6px;background:none;border:none}
+#messages{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.msg{padding:6px 0;line-height:1.6;word-break:break-word}
+.msg.user{color:#d4d4d4;text-align:right}
+.msg.assistant{color:#d4d4d4}
+.msg .time{font-size:11px;color:#555;margin-top:2px}
+.msg.system{text-align:center;color:#555;font-size:12px;padding:4px 0}
+.msg .delta-cursor{animation:blink .8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.msg pre{background:#181818;border:1px solid #2a2a2a;border-radius:4px;padding:6px 10px;overflow-x:auto;margin:4px 0;font-size:13px}
+.msg code{background:#181818;padding:1px 4px;border-radius:3px;font-size:13px}
+.msg pre code{background:none;padding:0}
+.msg blockquote{border-left:2px solid #444;padding-left:10px;color:#777;margin:4px 0}
+.msg li{margin-left:16px}
+.msg strong{color:#eee}
+.msg em{color:#aaa}
+#input-area{display:flex;align-items:center;border:none;display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid #1a1a1a}
+#msg-input{height:36px;border:none;outline:none;box-shadow:none;flex:1;padding:8px 4px;resize:none;max-height:80px;line-height:1.4;color:#d4d4d4;background:transparent}
+#msg-input::placeholder{color:#555}
+#msg-input:disabled{opacity:.4}
+#send-btn{color:#d4d4d4;font-size:15px;cursor:pointer;padding:0;height:36px;line-height:36px;background:transparent;flex-shrink:0}
+#send-btn:disabled{opacity:.3;cursor:default}
+#status{text-align:center;color:#555;padding:30px 16px;font-size:13px}
+#load-more{text-align:center;padding:6px;color:#555;font-size:12px;cursor:pointer}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+#chat-list-overlay{display:none;position:fixed;inset:0;z-index:100}
+#chat-list-overlay.show{display:block}
+#chat-list-bg{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+#chat-list-panel{position:absolute;bottom:0;left:0;right:0;background:#181818;border-radius:12px 12px 0 0;max-height:60%;overflow-y:auto;padding:12px 0}
+#chat-list-panel .panel-title{text-align:center;font-size:13px;color:#555;padding:4px 16px 8px}
+.chat-item{display:flex;align-items:center;padding:10px 16px;cursor:pointer;color:#d4d4d4;font-size:14px}
+.chat-item:hover{background:#222}
+.chat-item.active{color:#5b9aff}
+.chat-item .del-btn{margin-left:auto;color:#555;font-size:13px;padding:2px 6px}
+.chat-item .del-btn:hover{color:#f66}
+/* 主题切换按钮 */
+#top-bar{border:none}#chat-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666}#messages .msg .time{color:#aaa}.msg pre,.msg code{background:#f0f0f0;border-color:#ddd}.msg blockquote{border-left-color:#ccc;color:#888}#input-area{display:flex;align-items:center;border:none;border-top-color:#e0e0e0}#msg-input::placeholder{color:#bbb}#send-btn{color:#000}#chat-list-bg{background:rgba(200,200,200,.4)}#chat-list-panel{background:#f5f5f5}.panel-title{color:#999}.chat-item{color:#000}.chat-item:hover{background:#e8e8e8}.chat-item.active{color:#1a73e8}.chat-item .del-btn{color:#999}#status{color:#999}#load-more{color:#999}#new-chat-btn{color:#000}::-webkit-scrollbar-thumb{background:#ccc}.msg.user{color:#000!important}.msg.assistant{color:#000!important}.msg.system{color:#000!important}
+
+/* ===== 工具调用折叠样式 ===== */
+.tool-call{margin:2px 0}
+.tool-call .tc-header{display:flex;align-items:center;gap:4px;cursor:pointer;padding:2px 0;user-select:none}
+.tool-call .tc-header:hover{opacity:.8}
+.tool-call .tc-arrow{font-size:10px;transition:transform .2s;color:#888;flex-shrink:0;width:12px;text-align:center}
+.tool-call .tc-arrow.open{transform:rotate(90deg)}
+.tool-call .tc-name{font-weight:700;font-size:13px;color:#5b9aff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool-call .tc-params{font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:1;min-width:0}
+.tool-call .tc-body{display:none;margin:4px 0 4px 16px;padding:6px 8px;background:#181818;border:1px solid #2a2a2a;border-radius:4px;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;color:#aaa;max-height:300px;overflow:auto}
+.tool-call .tc-body.open{display:block}
+.tool-call .tc-result{margin:2px 0 2px 16px;padding:4px 8px;background:#0d1a0d;border:1px solid #1a3a1a;border-radius:4px;font-family:monospace;font-size:11px;white-space:pre-wrap;word-break:break-all;color:#7c7;max-height:200px;overflow:auto}
+
+/* ===== 斜杠命令提示面板 ===== */
+#slash-hint{display:none;position:fixed;bottom:56px;left:8px;right:8px;z-index:50;background:#181818;border:1px solid #2a2a2a;border-radius:10px;box-shadow:0 -2px 12px rgba(0,0,0,.3);padding:6px 0;max-height:200px;overflow-y:auto}
+.slash-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-radius:6px;margin:2px 6px;color:#d4d4d4}
+.slash-item:hover{background:#222}
+.slash-item .name{font-weight:600;font-size:14px}
+.slash-item .desc{font-size:12px;color:#888}
+@media(prefers-color-scheme:light){
+  #slash-hint{background:#fff;border-color:#e0e0e0;box-shadow:0 -2px 12px rgba(0,0,0,.1)}
+  .slash-item{color:#222}
+  .slash-item:hover{background:#f0f0f0}
+}
+
+/* ===== 内嵌浏览器分屏样式 ===== */
+#split-overlay{display:none;position:fixed;inset:0;z-index:200;flex-direction:column;background:#0f0f0f}
+#split-overlay.show{display:flex}
+#split-overlay .split-toolbar{display:flex;align-items:center;padding:4px 8px;background:#181818;border-bottom:1px solid #2a2a2a;gap:6px;flex-shrink:0}
+#split-overlay .split-toolbar .split-title{flex:1;font-size:13px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#split-overlay .split-toolbar .split-close{color:#d4d4d4;font-size:16px;cursor:pointer;padding:0 4px;background:none;border:none}
+#split-overlay .split-frame{flex:1;display:flex;flex-direction:column}
+#split-overlay iframe{width:100%;height:100%;border:none;background:#fff}
+@media(orientation:landscape){
+  #split-overlay{flex-direction:row}
+  #split-overlay .split-toolbar{flex-direction:column;width:32px;padding:4px;border-bottom:none;border-right:1px solid #2a2a2a}
+  #split-overlay .split-toolbar .split-title{writing-mode:vertical-rl;text-orientation:mixed}
+}
+@media(prefers-color-scheme:light){
+  #split-overlay{background:#fafafa}
+  #split-overlay .split-toolbar{background:#f0f0f0;border-bottom-color:#e0e0e0}
+  #split-overlay .split-toolbar .split-title{color:#666}
+  #split-overlay .split-toolbar .split-close{color:#000}
+  .tool-call .tc-name{color:#1a73e8}
+  .tool-call .tc-body{background:#f5f5f5;border-color:#ddd;color:#333}
+  .tool-call .tc-result{background:#e8f5e9;border-color:#c8e6c9;color:#2e7d32}
+}
+
+@media(prefers-color-scheme:light){
+html,body{background:#fafafa;color:#000}
+#top-bar{border-bottom-color:#e0e0e0}
+#chat-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#666}
+.msg .time{color:#aaa}
+.msg pre,.msg code{background:#f0f0f0;border-color:#ddd}
+.msg blockquote{border-left-color:#ccc;color:#888}
+#input-area{display:flex;align-items:center;border:none;border-top-color:#e0e0e0}
+#msg-input::placeholder{color:#bbb}
+#send-btn{color:#000}
+#chat-list-bg{background:rgba(200,200,200,.4)}
+#chat-list-panel{background:#f5f5f5}
+.panel-title{color:#999}
+.chat-item{color:#000}
+.chat-item.active{color:#1a73e8}
+.chat-item .del-btn{color:#999}
+#status{color:#999}
+#load-more{color:#999}
+.msg.user,.msg.assistant,.msg.system{color:#000}
+}
+</style>
+</head>
+<body>
+<div id="chat-page">
+  <div id="top-bar">
+    <div id="chat-title">对话列表</div>
+    <button id="new-chat-btn">+ 新建</button>
+  </div>
+  <div id="messages"><div id="status">连接中...</div></div>
+  <div id="input-area">
+    <textarea id="msg-input" rows="1" placeholder="输入消息 (/tool 打开工具箱)" disabled></textarea>
+    <button id="send-btn" disabled>发送</button>
+  </div>
+  <!-- 斜杠命令提示面板 -->
+  <div id="slash-hint">
+    <div class="slash-item" data-command="/tool">
+      <span style="font-size:18px">🧰</span>
+      <div style="flex:1"><div class="name">/tool</div><div class="desc">打开工具箱（计算器 + 浏览器）</div></div>
+    </div>
+  </div>
+</div>
+<div id="chat-list-overlay">
+  <div id="chat-list-bg"></div>
+  <div id="chat-list-panel">
+    <div class="panel-title">切换对话</div>
+    <div id="chat-list-content"></div>
+  </div>
+</div>
+<!-- 内嵌浏览器分屏 -->
+<div id="split-overlay">
+  <div class="split-toolbar">
+    <span class="split-title">加载中...</span>
+    <button class="split-close">✕</button>
+  </div>
+  <div class="split-frame">
+    <iframe id="split-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" loading="lazy" referrerpolicy="no-referrer"></iframe>
+  </div>
+</div>
+
+<script>
+var BASE='http://'+location.hostname+':8094';
+var TOKEN='b1a9f1e4f24742deb5bd1fa9afe97179';
+var currentChatId=void 0,messages=[],chats=[],sending=false,loadingMore=false,hasMoreBefore=false,nextBeforeTs=void 0,abortController=void 0;
+var messagesEl=document.getElementById('messages'),msgInput=document.getElementById('msg-input'),sendBtn=document.getElementById('send-btn');
+var chatTitle=document.getElementById('chat-title'),overlay=document.getElementById('chat-list-overlay');
+var chatListContent=document.getElementById('chat-list-content'),newChatBtn=document.getElementById('new-chat-btn');
+var splitOverlay=document.getElementById('split-overlay'),splitIframe=document.getElementById('split-iframe'),splitTitle=splitOverlay.querySelector('.split-title'),splitClose=splitOverlay.querySelector('.split-close');
+
+/* ===== 内嵌浏览器 ===== */
+function openSplitView(url,title){
+  if(!url)return;
+  // 如果已经是分屏模式，直接导航
+  if(splitOverlay.classList.contains('show')){
+    splitIframe.src=url;
+    splitTitle.textContent=title||url;
+    return;
+  }
+  // 缩小主页面到一半
+  var chatPage=document.getElementById('chat-page');
+  if(window.matchMedia('(orientation:landscape)').matches){
+    // 横屏：左右分屏
+    chatPage.style.cssText='width:50%;height:100%;float:left';
+    splitOverlay.style.cssText='display:flex;width:50%;height:100%;position:fixed;top:0;right:0';
+  }else{
+    // 竖屏：上下分屏
+    chatPage.style.cssText='width:100%;height:50%;float:none';
+    splitOverlay.style.cssText='display:flex;width:100%;height:50%;position:fixed;bottom:0;left:0';
+  }
+  splitOverlay.classList.add('show');
+  splitIframe.src=url;
+  splitTitle.textContent=title||url;
+}
+function closeSplitView(){
+  splitOverlay.classList.remove('show');
+  splitOverlay.style.cssText='';
+  splitIframe.src='about:blank';
+  document.getElementById('chat-page').style.cssText='';
+}
+splitClose.onclick=closeSplitView;
+// 窗口尺寸变化时调整分屏布局
+window.addEventListener('resize',function(){
+  if(!splitOverlay.classList.contains('show'))return;
+  var chatPage=document.getElementById('chat-page');
+  if(window.matchMedia('(orientation:landscape)').matches){
+    chatPage.style.cssText='width:50%;height:100%;float:left';
+    splitOverlay.style.cssText='display:flex;width:50%;height:100%;position:fixed;top:0;right:0';
+  }else{
+    chatPage.style.cssText='width:100%;height:50%;float:none';
+    splitOverlay.style.cssText='display:flex;width:100%;height:50%;position:fixed;bottom:0;left:0';
+  }
+});
+
+async function apiJson(path,init){
+  var resp=await fetch(BASE+path,{...init,headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+TOKEN,...(init?.headers||{})}});
+  var text=await resp.text();var data;
+  try{data=JSON.parse(text)}catch{data={}}
+  if(!resp.ok)throw new Error(data.error||'HTTP '+resp.status);
+  return data;
+}
+
+function formatTime(ts){
+  var ms=ts>100000000000?ts:ts*1000;
+  var d=new Date(ms);
+  if(isNaN(d.getTime()))return '--:--';
+  var pad=function(n){return String(n).padStart(2,'0')};
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+function scrollBottom(){setTimeout(function(){messagesEl.scrollTop=messagesEl.scrollHeight},50)}
+
+/* ===== 将文本中的链接转为可点击的分屏链接 ===== */
+function linkifyText(text){
+  if(!text)return '';
+  // URL正则（支持http/https）
+  var urlRgx=/(https?:\/\/[^\s<>"']+)/g;
+  return text.replace(urlRgx,function(m){
+    var display=m.length>60?m.slice(0,57)+'...':m;
+    return '<a href="javascript:void(0)" onclick="openSplitView(\''+m.replace(/'/g,"\\'")+'\',\''+display.replace(/'/g,"\\'")+'\')" style="color:#5b9aff;text-decoration:underline">'+display+'</a>';
+  });
+}
+
+/* ===== 渲染工具调用块 ===== */
+function renderToolCallBlock(block){
+  var content=block.content||'';
+  // 提取工具名：<tool name="xxx">
+  var nameMatch=content.match(/<tool\s+name="([^"]+)"/);
+  var toolName=nameMatch?nameMatch[1]:'工具调用';
+  // 提取参数摘要（去掉标签后的前60字符）
+  var summary=content.replace(/<[^>]+>/g,'').trim().slice(0,60);
+  if(summary.length>=60)summary+='...';
+  var div=document.createElement('div');div.className='tool-call';
+  var header=document.createElement('div');header.className='tc-header';
+  var arrow=document.createElement('span');arrow.className='tc-arrow';arrow.textContent='▶';
+  var nameSpan=document.createElement('span');nameSpan.className='tc-name';nameSpan.textContent=toolName;
+  var paramsSpan=document.createElement('span');paramsSpan.className='tc-params';paramsSpan.textContent=summary;
+  header.appendChild(arrow);header.appendChild(nameSpan);header.appendChild(paramsSpan);
+  var body=document.createElement('div');body.className='tc-body';
+  body.textContent=content;
+  header.onclick=function(){
+    var isOpen=body.classList.toggle('open');
+    arrow.classList.toggle('open',isOpen);
+  };
+  div.appendChild(header);div.appendChild(body);
+  // 如果有工具结果也展示
+  if(block.result){
+    var resultDiv=document.createElement('div');resultDiv.className='tc-result';
+    resultDiv.textContent=typeof block.result==='string'?block.result.slice(0,500):JSON.stringify(block.result).slice(0,500);
+    div.appendChild(resultDiv);
+  }
+  return div;
+}
+
+function mdToHtml(text){
+  if(!text)return '';
+  // 先做链接化，再做其他markdown
+  // 先处理图片 Markdown：![alt](file:///xxx) 或 ![alt](/xxx)
+  var html=text
+    .replace(/!\[([^\]]*)\]\(\s*(file:\/\/[^\s)]+)\s*\)/g,function(m,alt,src){
+      return '<img src="'+(src.startsWith('file://')?'/file/'+encodeURIComponent(src.slice(7)):src)+'" alt="'+alt.replace(/"/g,'"')+'" style="max-width:100%;border-radius:6px;margin:6px 0" loading="lazy">';
+    })
+    .replace(/!\[([^\]]*)\]\(\s*(\/[^\s)]+)\s*\)/g,function(m,alt,src){
+      return '<img src="/file/'+encodeURIComponent(src)+'" alt="'+alt.replace(/"/g,'"')+'" style="max-width:100%;border-radius:6px;margin:6px 0" loading="lazy">';
+    });
+  html=html
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,'<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/~~([^~]+)~~/g,'<del>$1</del>')
+    .replace(/^### (.+)$/gm,'<h4>$1</h4>')
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^# (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/^\d+\.\s+(.+)$/gm,'<li>$1</li>')
+    .replace(/\n/g,'<br>');
+  // 对非代码块内的链接做链接化处理（简化版：对整体做链接化，pre/code里不会有链接）
+  html=linkifyText(html);
+  return html;
+}
+
+function getDisplayHtml(m){
+  if(m.display_content)return mdToHtml(m.display_content);
+  if(!m.content_blocks||m.content_blocks.length===0)return mdToHtml(m.content_raw||'');
+  var texts=m.content_blocks.filter(function(b){return b.kind==='text'}).map(function(b){return b.content||''}).join('').trim();
+  var html=mdToHtml(texts||m.content_raw||'');
+  // 添加工具调用块（如果有）
+  var toolBlocks=m.content_blocks.filter(function(b){return b.kind==='xml'});
+  if(toolBlocks.length>0){
+    // 用容器包裹，避免影响现有布局
+    var container=document.createElement('div');
+    container.innerHTML=html;
+    for(var i=0;i<toolBlocks.length;i++){
+      container.appendChild(renderToolCallBlock(toolBlocks[i]));
+    }
+    return container.innerHTML;
+  }
+  return html;
+}
+
+function getChatName(c){return c.title||c.id.slice(0,8)}
+
+function updateChatTitle(){chatTitle.textContent=chats.find(function(c){return c.id===currentChatId})?getChatName(chats.find(function(c){return c.id===currentChatId})):'选择对话'}
+
+function showChatList(){
+  chatListContent.innerHTML='';
+  for(var i=0;i<chats.length;i++){
+    var c=chats[i];
+    var div=document.createElement('div');div.className='chat-item'+(c.id===currentChatId?' active':'');
+    var name=document.createElement('span');name.textContent=getChatName(c);div.appendChild(name);
+    (function(cid){
+      var del=document.createElement('span');del.className='del-btn';del.textContent='×';
+      del.onclick=async function(e){e.stopPropagation();if(!confirm('删除该对话？'))return;try{await apiJson('/api/web/chats/'+cid,{method:'DELETE'});chats=chats.filter(function(x){return x.id!==cid});if(cid===currentChatId){if(chats.length>0){switchChat(chats[0].id)}else{currentChatId=void 0;messages=[];renderMessages();updateChatTitle()}}showChatList()}catch(e){}};
+      div.appendChild(del);
+      div.onclick=function(){switchChat(cid);hideChatList()};
+    })(c.id);
+    chatListContent.appendChild(div);
+  }
+  overlay.classList.add('show');
+}
+
+function hideChatList(){overlay.classList.remove('show')}
+
+async function switchChat(id){
+  if(id===currentChatId)return;
+  try{await apiJson('/api/web/chats/'+id,{method:'PUT',body:JSON.stringify({set_current:true})})}catch(e){}
+  currentChatId=id;updateChatTitle();await loadMessages(id);
+}
+
+function renderMessages(){
+  var prevScroll=messagesEl.scrollTop,prevHeight=messagesEl.scrollHeight;
+  messagesEl.innerHTML='';
+  if(hasMoreBefore){var d=document.createElement('div');d.id='load-more';d.textContent='加载更多';d.onclick=loadMoreMessages;messagesEl.appendChild(d)}
+  for(var i=0;i<messages.length;i++){
+    var m=messages[i];
+    var div=document.createElement('div');
+    if(m.sender==='user'||m.sender==='assistant'){
+      div.className='msg '+m.sender;
+      var c=document.createElement('div');c.innerHTML=getDisplayHtml(m);div.appendChild(c);
+      if(m.streaming){var cur=document.createElement('span');cur.className='delta-cursor';cur.textContent=' ▍';c.appendChild(cur)}
+      // 工具调用的点击展开事件重新绑定（因为innerHTML不会自动绑定）
+      var tcHeaders=div.querySelectorAll('.tc-header');
+      for(var k=0;k<tcHeaders.length;k++){
+        (function(hdr){
+          var body=hdr.nextElementSibling;
+          var arrow=hdr.querySelector('.tc-arrow');
+          if(!hdr._bound){
+            hdr._bound=true;
+            hdr.onclick=function(){
+              var isOpen=body.classList.toggle('open');
+              if(arrow)arrow.classList.toggle('open',isOpen);
+            };
+          }
+        })(tcHeaders[k]);
+      }
+      var t=document.createElement('div');t.className='time';t.textContent=formatTime(m.timestamp);div.appendChild(t);
+    }else{div.className='msg system';div.textContent=m.content_raw||''}
+    messagesEl.appendChild(div);
+  }
+  if(prevScroll>0&&prevHeight>0)requestAnimationFrame(function(){messagesEl.scrollTop=messagesEl.scrollHeight-prevHeight+prevScroll});else scrollBottom();
+}
+
+async function loadMoreMessages(){
+  if(loadingMore||!hasMoreBefore||!nextBeforeTs)return;
+  loadingMore=true;
+  var el=document.getElementById('load-more');if(el)el.textContent='加载中';
+  try{
+    var data=await apiJson('/api/web/chats/'+encodeURIComponent(currentChatId)+'/messages?limit=30&before_timestamp='+nextBeforeTs);
+    var old=data.messages||[];hasMoreBefore=data.has_more_before||false;nextBeforeTs=data.next_before_timestamp||void 0;
+    var exist=new Set(messages.map(function(m){return m.id}));messages=[].concat(old.filter(function(m){return !exist.has(m.id)})).concat(messages);renderMessages();
+  }catch(e){if(el)el.textContent='加载更多'}
+  loadingMore=false;
+}
+
+async function loadMessages(chatId){
+  messagesEl.innerHTML='<div id="status">加载中</div>';
+  try{
+    var data=await apiJson('/api/web/chats/'+encodeURIComponent(chatId)+'/messages?limit=50');
+    messages=data.messages||[];hasMoreBefore=data.has_more_before||false;nextBeforeTs=data.next_before_timestamp||void 0;
+    renderMessages();
+  }catch(e){messagesEl.innerHTML='<div id="status">加载失败</div>'}
+}
+
+async function sendMessage(text){
+  if(sending||!text.trim()||!currentChatId)return;
+  sending=true;msgInput.disabled=true;sendBtn.disabled=true;msgInput.placeholder='发送中';
+  abortController=new AbortController();
+  var userMsg={id:'tmp-u'+Date.now(),sender:'user',content_raw:text,display_content:text,timestamp:Math.floor(Date.now()/1000)};
+  messages.push(userMsg);renderMessages();scrollBottom();
+  var aiMsg={id:'tmp-a'+Date.now(),sender:'assistant',content_raw:'',display_content:'',timestamp:Math.floor(Date.now()/1000),streaming:true};
+  messages.push(aiMsg);renderMessages();scrollBottom();
+  try{
+    var resp=await fetch(BASE+'/api/web/chats/'+encodeURIComponent(currentChatId)+'/messages/stream',{
+      method:'POST',headers:{Authorization:'Bearer '+TOKEN,Accept:'text/event-stream','Content-Type':'application/json'},
+      body:JSON.stringify({message:text,attachment_ids:[],return_tool_status:false}),signal:abortController.signal
+    });
+    if(!resp.ok){var t=await resp.text();var m='失败';try{m=JSON.parse(t).error||m}catch{}throw new Error(m)}
+    var reader=resp.body.getReader(),decoder=new TextDecoder();var buffer='';
+    while(true){
+      var result=await reader.read();if(result.done)break;
+      buffer+=decoder.decode(result.value,{stream:true});
+      var blocks=buffer.split(/\r?\n\r?\n/);buffer=blocks.pop()||'';
+      for(var j=0;j<blocks.length;j++){
+        var b=blocks[j];
+        var ev=parseSSE(b.trim());if(!ev)continue;
+        if(ev.event==='assistant_delta'&&ev.delta){
+          var last=messages[messages.length-1];
+          if(last&&last.streaming){
+            last.content_raw+=ev.delta;last.display_content=last.content_raw;
+            var els=messagesEl.querySelectorAll('.msg'),el=els[els.length-1];
+            if(el&&el.classList.contains('assistant')){
+              var ce=el.querySelector('div:first-child');
+              if(ce)ce.innerHTML=getDisplayHtml(last)+' <span class="delta-cursor">▍</span>';
+              // 重新绑定工具调用点击
+              var tcHeaders=el.querySelectorAll('.tc-header');
+              for(var k=0;k<tcHeaders.length;k++){
+                (function(hdr){
+                  var body=hdr.nextElementSibling;
+                  var arrow=hdr.querySelector('.tc-arrow');
+                  if(!hdr._bound){
+                    hdr._bound=true;
+                    hdr.onclick=function(){
+                      var isOpen=body.classList.toggle('open');
+                      if(arrow)arrow.classList.toggle('open',isOpen);
+                    };
+                  }
+                })(tcHeaders[k]);
+              }
+            }
+            scrollBottom();
+          }
+        }else if(ev.event==='assistant_done'){
+          var last=messages[messages.length-1];
+          if(last){last.streaming=false;if(ev.message){last.id=ev.message.id;last.content_raw=ev.message.content_raw;last.display_content=ev.message.display_content||ev.message.content_raw;last.timestamp=ev.message.timestamp}}
+          renderMessages();scrollBottom();
+        }else if(ev.event==='error'){throw new Error(ev.error||'错误')}
+      }
+    }
+    if(buffer){var ev=parseSSE(buffer.trim());if(ev&&ev.event==='assistant_done'){var last=messages[messages.length-1];if(last){last.streaming=false;if(ev.message){last.id=ev.message.id;last.content_raw=ev.message.content_raw;last.display_content=ev.message.display_content||ev.message.content_raw;last.timestamp=ev.message.timestamp}}renderMessages();scrollBottom()}}
+  }catch(e){
+    if(e.name==='AbortError')return;
+    var last=messages[messages.length-1];if(last&&last.streaming)messages.pop();
+    messages.push({id:'err'+Date.now(),sender:'system',content_raw:e.message});renderMessages();scrollBottom();
+  }
+  sending=false;msgInput.disabled=false;sendBtn.disabled=false;msgInput.placeholder='输入消息';msgInput.focus();
+}
+
+function parseSSE(block){
+  var lines=block.split(/\r?\n/);var name='';var data=[];
+  for(var i=0;i<lines.length;i++){var l=lines[i];if(l.startsWith('event:'))name=l.slice(6).trim();else if(l.startsWith('data:'))data.push(l.slice(5))}
+  if(!name||data.length===0)return void 0;
+  try{return{event:name,...JSON.parse(data.join('\n'))}}catch{return void 0}
+}
+
+(async function(){
+  try{
+    var boot=await apiJson('/api/web/bootstrap');
+    chats=await apiJson('/api/web/chats');
+    if(boot.current_chat_id&&chats.some(function(c){return c.id===boot.current_chat_id})){currentChatId=boot.current_chat_id}
+    else if(chats.length>0){currentChatId=chats[0].id}
+    else{var nc=await apiJson('/api/web/chats',{method:'POST',body:JSON.stringify({set_current:true})});currentChatId=nc.id;chats=[nc]}
+    updateChatTitle();
+    if(currentChatId){msgInput.disabled=false;sendBtn.disabled=false;await loadMessages(currentChatId)}
+  }catch(e){messagesEl.innerHTML='<div id="status">连接失败</div>'}
+})();
+
+chatTitle.onclick=function(){showChatList()};
+document.getElementById('chat-list-bg').onclick=function(){hideChatList()};
+newChatBtn.onclick=async function(){
+  try{
+    var nc=await apiJson('/api/web/chats',{method:'POST',body:JSON.stringify({set_current:true})});
+    chats.unshift(nc);await switchChat(nc.id);hideChatList();
+  }catch(e){}
+};
+// 斜杠命令提示
+var slashHint=document.getElementById('slash-hint');
+var slashItems=document.querySelectorAll('.slash-item');
+function showSlashHint(){if(slashHint)slashHint.style.display='block'}
+function hideSlashHint(){if(slashHint)slashHint.style.display='none'}
+slashItems.forEach(function(item){
+  item.onclick=function(){
+    var cmd=item.getAttribute('data-command');hideSlashHint();
+    if(cmd==='/tool'){
+      msgInput.value='';msgInput.style.height='auto';
+      var base=window.location.origin||window.location.protocol+'//'+window.location.host;
+      openSplitView(base+'/toolbox.html','工具箱');
+    }
+  };
+  item.onmouseenter=function(){this.style.background='#222'};
+  item.onmouseleave=function(){this.style.background='transparent'};
+});
+function checkToolCommand(text){
+  var t=text.trim();
+  if(t==='/tool'||t==='/tools'){
+    msgInput.value='';msgInput.style.height='auto';
+    var base=window.location.origin||window.location.protocol+'//'+window.location.host;
+    openSplitView(base+'/toolbox.html','工具箱');
+    return true;
+  }
+  return false;
+}
+sendBtn.onclick=function(){var t=msgInput.value;if(!t.trim()||sending)return;hideSlashHint();if(checkToolCommand(t))return;msgInput.value='';msgInput.style.height='auto';sendMessage(t)};
+msgInput.onkeydown=function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();hideSlashHint();if(!checkToolCommand(msgInput.value)){sendBtn.click()}}
+  if(e.key==='Escape'){hideSlashHint()}
+};
+msgInput.oninput=function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';if(this.value==='/')showSlashHint();else hideSlashHint()};
+document.addEventListener('click',function(e){if(slashHint&&!slashHint.contains(e.target)&&e.target!==msgInput)hideSlashHint()});
+</script>
+</body>
+</html>

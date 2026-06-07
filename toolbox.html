@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=yes">
+<title>工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#fff;color:#222;font-size:14px;overflow:hidden}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:100}
+.tab{flex:1;text-align:center;padding:10px 0;cursor:pointer;font-size:14px;font-weight:500;color:#999;border-bottom:2px solid transparent;transition:none}
+.tab.active{color:#222;border-bottom-color:#222}
+.panel{display:none;height:calc(100vh - 38px);flex-direction:column}
+.panel.active{display:flex}
+.browser-bar{display:flex;gap:6px;padding:8px 10px;background:#f8f8f8;border-bottom:1px solid #eee;align-items:center}
+.browser-bar input{flex:1;height:34px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fff;color:#222;min-width:0}
+.browser-bar input:focus{border-color:#222}
+#go-btn{height:34px;padding:0 14px;background:#222;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center}
+#go-btn:active{opacity:0.8}
+.menu-group{position:relative;flex-shrink:0;display:flex;align-items:center;height:34px}
+.menu-btn{width:34px;height:34px;padding:0;background:#222;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.menu-btn:active{opacity:0.8}
+.menu-btn svg{fill:#fff;width:18px;height:18px}
+.menu-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:1000;min-width:160px;margin-top:4px;display:none}
+.menu-dropdown.show{display:block}
+.menu-dropdown .menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#222;border-bottom:1px solid #eee;white-space:nowrap}
+.menu-dropdown .menu-item:last-child{border-bottom:none}
+.menu-dropdown .menu-item:active{background:#f0f0f0}
+.menu-dropdown .menu-item svg{fill:#555;width:16px;height:16px;flex-shrink:0}
+.menu-dropdown .zoom-slider{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee}
+.menu-dropdown .zoom-slider input[type=range]{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ddd;border-radius:2px;outline:none}
+.menu-dropdown .zoom-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#222;border:none;cursor:pointer}
+.menu-dropdown .zoom-slider .zoom-val{font-size:12px;color:#666;min-width:36px;text-align:right;font-variant-numeric:tabular-nums}
+.section-title{font-size:12px;font-weight:600;color:#999;margin:10px 10px 4px;text-transform:uppercase;letter-spacing:0.5px}
+.quick-links{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px}
+.quick-link{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;background:#fff;border:1px solid #eee;border-radius:8px;text-decoration:none;color:#555;font-size:11px;cursor:pointer}
+.quick-link:active{background:#f5f5f5}
+.quick-link .icon{font-size:18px;font-weight:700;color:#222}
+.browser-frame{flex:1;overflow:hidden;position:relative;display:block;width:100%}
+.browser-wrapper{width:100%;height:100%}
+.browser-wrapper iframe{width:100%;height:100%;border:none;display:block}
+.calc{display:flex;flex-direction:column;height:100%;padding:10px}
+.calc-display{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 16px;margin-bottom:10px;min-height:80px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end}
+.calc-expr{font-size:13px;color:#999;min-height:18px;word-break:break-all;text-align:right;width:100%}
+#calc-result{font-size:28px;font-weight:300;color:#222;margin-top:4px}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:1;align-content:start}
+.calc-grid button{height:48px;border:none;border-radius:8px;font-size:16px;cursor:pointer;background:#fff;color:#222;border:1px solid #ddd}
+.calc-grid button:active{background:#eee}
+.calc-grid .fn{color:#999}
+.calc-grid .op{color:#222;font-weight:700}
+.calc-grid .eq{background:#222;color:#fff;border-color:#222}
+.calc-grid .eq:active{opacity:0.85}
+/* 全屏模式：隐藏所有非浏览器UI，让iframe填满全屏 */
+.is-fullscreen body{overflow:hidden}
+.is-fullscreen .tabs{display:none}
+.is-fullscreen #panel-calc{display:none}
+.is-fullscreen .section-title{display:none}
+.is-fullscreen .quick-links{display:none}
+.is-fullscreen .browser-frame{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999}
+.is-fullscreen .browser-frame iframe{width:100vw;height:100vh;transform:none}
+.is-fullscreen .browser-bar{position:fixed;top:0;left:0;right:0;z-index:10000}
+.is-fullscreen #panel-browser{padding-top:50px;height:100vh}
+.is-fullscreen .menu-dropdown{z-index:10001}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-panel="calc">计算器</div>
+  <div class="tab" data-panel="browser">浏览器</div>
+</div>
+
+<!-- 计算器面板 -->
+<div class="panel active" id="panel-calc">
+  <div class="calc">
+    <div class="calc-display">
+      <div class="calc-expr" id="calc-expr"></div>
+      <div id="calc-result">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="fn" data-action="clear">AC</button>
+      <button class="fn" data-action="back">BK</button>
+      <button class="fn" data-action="percent">%</button>
+      <button class="op" data-action="divide">/</button>
+      <button class="num" data-action="7">7</button>
+      <button class="num" data-action="8">8</button>
+      <button class="num" data-action="9">9</button>
+      <button class="op" data-action="multiply">*</button>
+      <button class="num" data-action="4">4</button>
+      <button class="num" data-action="5">5</button>
+      <button class="num" data-action="6">6</button>
+      <button class="op" data-action="subtract">-</button>
+      <button class="num" data-action="1">1</button>
+      <button class="num" data-action="2">2</button>
+      <button class="num" data-action="3">3</button>
+      <button class="op" data-action="add">+</button>
+      <button class="num" data-action="neg">-/+</button>
+      <button class="num" data-action="0">0</button>
+      <button class="num" data-action="dot">.</button>
+      <button class="eq" data-action="equals">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- 浏览器面板 -->
+<div class="panel" id="panel-browser">
+  <div class="browser">
+    <div class="browser-bar">
+      <input id="url-input" type="text" placeholder="输入网址，例如 https://www.baidu.com">
+      <button id="go-btn">打开</button>
+      <div class="menu-group">
+        <button class="menu-btn" id="menu-btn" title="菜单">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+        </button>
+        <div class="menu-dropdown" id="menu-dropdown">
+          <div class="menu-item" data-action="fullscreen">
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            全屏
+          </div>
+          <div class="menu-item" data-action="home">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            返回首页
+          </div>
+          <div class="menu-item" data-action="refresh">
+            <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            刷新
+          </div>
+          <div class="zoom-slider">
+            <span style="font-size:12px;color:#555">缩放</span>
+            <input type="range" id="zoom-slider" min="30" max="200" value="100">
+            <span class="zoom-val" id="zoom-val">100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">快捷</div>
+    <div class="quick-links">
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.baidu.com"><span class="icon">B</span>百度</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.bilibili.com"><span class="icon">B</span>B站</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.zhihu.com"><span class="icon">Z</span>知乎</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.google.com"><span class="icon">G</span>Google</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://github.com"><span class="icon">G</span>GitHub</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.wikipedia.org"><span class="icon">W</span>维基百科</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://stackoverflow.com"><span class="icon">S</span>Stack</a>
+      <a class="quick-link" href="javascript:void 0" data-url="https://www.runoob.com"><span class="icon">R</span>菜鸟教程</a>
+    </div>
+    <div class="browser-frame" id="browser-frame">
+      <div class="browser-wrapper" id="browser-wrapper">
+        <iframe id="browser-iframe" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== 选项卡切换 ===== */
+var tabs=document.querySelectorAll('.tab');
+var panels={};
+tabs.forEach(function(tab){
+  var pid=tab.getAttribute('data-panel');
+  panels[pid]=document.getElementById('panel-'+pid);
+  tab.onclick=function(){
+    tabs.forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');
+    for(var k in panels){panels[k].classList.remove('active')}
+    panels[pid].classList.add('active');
+  };
+});
+
+/* ===== 菜单下拉控制 ===== */
+var menuBtn=document.getElementById('menu-btn');
+var menuDropdown=document.getElementById('menu-dropdown');
+menuBtn.onclick=function(e){
+  e.stopPropagation();
+  menuDropdown.classList.toggle('show');
+};
+document.addEventListener('click',function(e){
+  if(!menuDropdown.contains(e.target)&&e.target!==menuBtn){
+    menuDropdown.classList.remove('show');
+  }
+});
+
+/* ===== 浏览器 ===== */
+var urlInput=document.getElementById('url-input');
+var goBtn=document.getElementById('go-btn');
+var browserIframe=document.getElementById('browser-iframe');
+
+function navigateTo(url){
+  if(!url||url.trim()==='')return;
+  url=url.trim();
+  if(!url.startsWith('http://')&&!url.startsWith('https://')){url='https://'+url}
+  var ql=document.querySelector('.quick-links');
+  var st=document.querySelector('.section-title');
+  if(ql) ql.style.display='none';
+  if(st) st.style.display='none';
+  var frame=document.getElementById('browser-frame');
+  if(frame) frame.style.flex='1';
+  var host=window.location.hostname||'192.168.1.140';
+  browserIframe.src='http://'+host+':8910/browse/'+encodeURIComponent(url);
+  urlInput.value=url;
+}
+
+goBtn.onclick=function(){navigateTo(urlInput.value)};
+urlInput.onkeydown=function(e){if(e.key==='Enter'){navigateTo(urlInput.value)}};
+
+document.querySelectorAll('.quick-link').forEach(function(link){
+  link.onclick=function(){navigateTo(link.getAttribute('data-url'))};
+});
+
+/* ===== 全屏：优先 Fullscreen API，检测进入/退出切换 is-fullscreen 类 ===== */
+function onFSChange(){
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    document.documentElement.classList.add('is-fullscreen');
+  }else{
+    document.documentElement.classList.remove('is-fullscreen');
+  }
+}
+document.addEventListener('fullscreenchange',onFSChange);
+document.addEventListener('webkitfullscreenchange',onFSChange);
+
+document.querySelector('.menu-item[data-action="fullscreen"]').onclick=function(){
+  menuDropdown.classList.remove('show');
+  var el=document.documentElement;
+  if(el.requestFullscreen){
+    el.requestFullscreen().catch(function(){});
+  }else if(el.webkitRequestFullscreen){
+    el.webkitRequestFullscreen();
+  }else{
+    var url=urlInput.value.trim()||'https://www.baidu.com';
+    var fullUrl='toolbox.html?url='+encodeURIComponent(url);
+    var win=window.open(fullUrl,'_blank');
+    if(!win||win.closed||typeof win.closed=='undefined'){
+      alert('请在新页面手动打开:\n'+location.href.split('?')[0]+'?url='+encodeURIComponent(url));
+    }
+  }
+};
+/* ===== 返回首页（菜单项） ===== */
+document.querySelector('.menu-item[data-action="home"]').onclick=function(){
+  navigateTo('https://www.baidu.com');
+  menuDropdown.classList.remove('show');
+};
+/* ===== 刷新（菜单项） ===== */
+document.querySelector('.menu-item[data-action="refresh"]').onclick=function(){
+  var url=urlInput.value.trim();
+  if(url){navigateTo(url)}
+  menuDropdown.classList.remove('show');
+};
+
+/* ===== 缩放控制（滑块） ===== */
+var zoomLevel=100;
+var zoomSlider=document.getElementById('zoom-slider');
+var zoomVal=document.getElementById('zoom-val');
+zoomSlider.oninput=function(){
+  zoomLevel=parseInt(this.value);
+  zoomVal.textContent=zoomLevel+'%';
+  applyZoom();
+};
+function applyZoom(){
+  var iframe=document.getElementById('browser-iframe');
+  if(!iframe)return;
+  var frame=document.getElementById('browser-frame');
+  if(!frame)return;
+  var s=zoomLevel/100;
+  if(s===1){iframe.style.width='';iframe.style.height='';return}
+  var cw=frame.clientWidth;
+  var ch=frame.clientHeight;
+  if(cw===0||ch===0){setTimeout(applyZoom,200);return}
+  iframe.style.width=Math.round(cw*s)+'px';
+  iframe.style.height=Math.round(ch*s)+'px';
+}
+applyZoom();
+
+/* ===== 计算器 ===== */
+var calcResult=document.getElementById('calc-result');
+var calcExpr=document.getElementById('calc-expr');
+var calcState={a:'',b:'',op:'',result:'',clearNext:false};
+
+function calcUpdateDisplay(){
+  if(calcState.result!==''){calcResult.textContent=calcState.result
+  }else if(calcState.b!==''){calcResult.textContent=calcState.b
+  }else if(calcState.a!==''){calcResult.textContent=calcState.a
+  }else{calcResult.textContent='0'}
+}
+
+function calcInput(action){
+  if(action==='clear'){
+    calcState={a:'',b:'',op:'',result:'',clearNext:false};
+    calcExpr.textContent='';
+    calcUpdateDisplay();
+    return;
+  }
+  if(action==='back'){
+    if(calcState.clearNext){return}
+    if(calcState.result!==''){calcState.result='';calcUpdateDisplay();return}
+    if(calcState.b!==''){calcState.b=calcState.b.slice(0,-1);calcUpdateDisplay();return}
+    if(calcState.op!==''){calcState.op='';calcExpr.textContent=calcState.a;return}
+    if(calcState.a!==''){calcState.a=calcState.a.slice(0,-1);calcUpdateDisplay();return}
+    return;
+  }
+  if(action==='percent'){
+    var num=parseFloat(calcState.b||calcState.a||'0');
+    if(!isNaN(num)){var r=String(num/100);calcState.result=r;calcExpr.textContent=calcState.a+(calcState.op||'')+(calcState.b||'')+'%';calcUpdateDisplay()}
+    return;
+  }
+  if(action==='neg'){
+    if(calcState.clearNext){calcState.result='';calcState.clearNext=false}
+    var target=calcState.b||calcState.a;
+    if(target!==''&&target!=='0'){
+      if(target.startsWith('-')){target=target.slice(1)}else{target='-'+target}
+      if(calcState.b!==''){calcState.b=target}else{calcState.a=target}
+      calcUpdateDisplay()
+    }
+    return;
+  }
+  if(['add','subtract','multiply','divide'].includes(action)){
+    var opMap={add:'+',subtract:'-',multiply:'*',divide:'/'};
+    var sym=opMap[action];
+    if(calcState.result!==''){
+      calcState.a=calcState.result;calcState.b='';calcState.op=sym;calcState.result='';calcState.clearNext=false;
+      calcExpr.textContent=calcState.a+sym;
+      calcUpdateDisplay();
+      return;
+    }
+    if(calcState.op&&calcState.b!==''){
+      var a=parseFloat(calcState.a),b=parseFloat(calcState.b);
+      if(isNaN(a)||isNaN(b))return;
+      var r;
+      if(calcState.op==='+'){r=a+b}else if(calcState.op==='-'){r=a-b}else if(calcState.op==='*'){r=a*b}else if(calcState.op==='/'){r=b!==0?a/b:'Error'}
+      calcState.a=r==='Error'?'0':String(r);calcState.b='';calcState.op=sym;calcState.clearNext=false;
+      calcExpr.textContent=calcState.a+sym;
+      calcUpdateDisplay();
+      return;
+    }
+    if(calcState.op&&calcState.b===''){calcState.op=sym;calcExpr.textContent=calcState.a+sym;return}
+    calcState.op=sym;calcState.a=calcResult.textContent;calcState.b='';calcState.clearNext=true;
+    calcExpr.textContent=calcState.a+sym;
+    calcUpdateDisplay();
+    return;
+  }
+  if(action==='equals'){
+    if(!calcState.op||calcState.a==='')return;
+    if(calcState.clearNext)return;
+    var a=parseFloat(calcState.a),b=parseFloat(calcState.b||calcState.a);
+    if(isNaN(a)||isNaN(b))return;
+    var r;
+    if(calcState.op==='+'){r=a+b}else if(calcState.op==='-'){r=a-b}else if(calcState.op==='*'){r=a*b}else if(calcState.op==='/'){r=b!==0?a/b:'Error'}
+    calcExpr.textContent=calcState.a+calcState.op+(calcState.b||calcState.a)+'=';
+    calcState.result=r==='Error'?'Error':String(parseFloat(r.toFixed(10)));
+    calcState.clearNext=true;
+    calcUpdateDisplay();
+    return;
+  }
+  if(action==='dot'){
+    if(calcState.clearNext){calcState.result='';calcState.clearNext=false;calcState.a='0.';calcUpdateDisplay();return}
+    var target=calcState.b!==''?'b':calcState.a!==''?'a':'a';
+    if(target==='a'){if(calcState.a.includes('.'))return;calcState.a=calcState.a===''?'0.':calcState.a+'.';calcUpdateDisplay()}
+    else if(calcState.b!==''){if(calcState.b.includes('.'))return;calcState.b=calcState.b===''?'0.':calcState.b+'.';calcUpdateDisplay()}
+    return;
+  }
+  // digit
+  if(calcState.clearNext){calcState.result='';calcState.clearNext=false;calcState.a='';calcState.b='';calcState.op=''}
+  if(calcState.op===''||calcState.a===''){
+    if(calcState.a===''&&action==='0'){calcState.a='0';calcUpdateDisplay();return}
+    if(calcState.a==='0'){calcState.a=action;calcUpdateDisplay();return}
+    calcState.a+=action;calcUpdateDisplay()
+  }else{
+    if(calcState.b==='0'){calcState.b=action;calcUpdateDisplay();return}
+    calcState.b+=action;calcUpdateDisplay()
+  }
+}
+
+document.querySelectorAll('.calc-grid button').forEach(function(btn){
+  btn.onclick=function(){
+    var action=this.getAttribute('data-action');
+    calcInput(action);
+  };
+});
+
+/* ===== URL参数检测：自动加载 ===== */
+(function(){
+  var match=window.location.search.match(/[?&]url=([^&]+)/);
+  if(match){
+    var url=decodeURIComponent(match[1]);
+    if(url){
+      var bt=document.querySelector('[data-panel="browser"]');
+      if(bt) bt.click();
+      setTimeout(function(){
+        navigateTo(url);
+        var ql=document.querySelector('.quick-links');
+        var st=document.querySelector('.section-title');
+        if(ql) ql.style.display='none';
+        if(st) st.style.display='none';
+        var tabs=document.querySelector('.tabs');
+        if(tabs) tabs.style.display='none';
+      }, 100);
+    }
+  }
+})();
+
+document.getElementById('url-input').focus();
+</script>
+</body>
+</html>
