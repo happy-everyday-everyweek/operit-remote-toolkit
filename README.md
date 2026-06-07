@@ -1,6 +1,8 @@
-# AI Toolkit
+# Operit Remote Toolkit
 
-一个基于 Python 自建 HTTP 服务器的 AI 工具箱，包含聊天前端、浏览代理、工具箱页面和 Server Keeper 进程看守器。专为 **Android proot 环境**及老旧 WebView 设备优化。
+通过局域网远程连接 Android 上的 Operit AI 环境，提供聊天、浏览代理、文件管理和进程看守的轻量级工具箱。
+
+专为 **Android proot 环境**及老旧 WebView 设备优化。
 
 ---
 
@@ -43,6 +45,39 @@
 | 8925 | 文件服务 | http.server 提供文件下载服务 |
 | 8930 | 文件管理器 | http.server 提供文件管理页面 |
 | 8931 | 聊天页面 | http.server 运行备用聊天界面 |
+
+## 快速配置
+
+将以下内容发送给你的 Operit AI Agent，即可自动完成依赖安装和服务配置：
+
+```
+我需要你在 proot 容器中完成以下操作：
+
+1. 进入工作目录并安装依赖（已安装则跳过）：
+   cd /data/user/0/com.ai.assistance.operit/files/workspace/你的工作区ID
+   pip install --break-system-packages flask flask-cors requests 2>/dev/null || true
+
+2. 确保 Python 3 可用：
+   which python3
+
+3. 启动服务（按顺序）：
+   cd /data/user/0/com.ai.assistance.operit/files/workspace/你的工作区ID
+   nohup python3 server.py > /sdcard/Download/server_8924.log 2>&1 &
+   sleep 2
+   nohup python3 keeper.py > /sdcard/Download/keeper_full.log 2>&1 &
+
+4. 确认服务运行：
+   for p in 8094 8924 8910 8925 8930 8931; do
+     STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$p/ --connect-timeout 2 2>/dev/null)
+     echo "端口 $p: $STATUS"
+   done
+
+5. 确认浏览代理可用：
+   curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8924/browse/https://www.baidu.com --connect-timeout 5
+
+6. 获取本机局域网 IP 并输出：
+   ip addr show | grep -E 'inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}'
+```
 
 ## 启动方式
 
@@ -98,6 +133,9 @@ A: Android 省电策略可能限制应用后台网络。在系统设置中将 Op
 
 **Q: 页面显示为移动版？**
 A: 确认使用的是代理端点（`/browse/` 开头），且看守器或 server.py 中 User-Agent 设置有被正确加载。
+
+**Q: proot 容器崩溃重启后外部设备无法访问？**
+A: proot 容器重启后可能丢失端口映射。需在 Android 系统层操作，例如通过 `adb forward` 转发端口，或者重启 proot 容器后重新启动服务。
 
 ## 许可
 
