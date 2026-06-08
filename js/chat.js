@@ -142,6 +142,135 @@ function executeCommand(cmd){
     msgInput.value='';msgInput.style.height='auto';hideSlashHint();
     var base=window.location.origin||window.location.protocol+'//'+window.location.host;
     openSplitUrl(base+'/toolbox.html','工具箱');
+  }else if(cmd==='/card'){
+    msgInput.value='';msgInput.style.height='auto';hideSlashHint();
+    openCharacterSelector();
+  }
+}
+
+// 角色卡选择器
+var characterSelectorLoading=false;
+function openCharacterSelector(){
+  if(characterSelectorLoading)return;
+  characterSelectorLoading=true;
+  // 移除已有面板
+  var old=document.getElementById('character-selector-overlay');
+  if(old)old.remove();
+  // 创建遮罩
+  var overlay=document.createElement('div');
+  overlay.id='character-selector-overlay';
+  overlay.style.cssText='display:flex;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center';
+  overlay.onclick=function(e){if(e.target===overlay){overlay.remove();characterSelectorLoading=false}};
+  var panel=document.createElement('div');
+  panel.style.cssText='background:#181818;border-radius:12px;max-width:90%;width:360px;max-height:80%;overflow:hidden;display:flex;flex-direction:column';
+  panel.onclick=function(e){e.stopPropagation()};
+  var header=document.createElement('div');
+  header.style.cssText='padding:14px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between';
+  var title=document.createElement('span');
+  title.textContent='选择角色卡';
+  title.style.cssText='font-size:15px;font-weight:600;color:#d4d4d4';
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='✕';
+  closeBtn.style.cssText='background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:0 4px';
+  closeBtn.onclick=function(){overlay.remove();characterSelectorLoading=false};
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  var list=document.createElement('div');
+  list.style.cssText='overflow-y:auto;padding:8px 0';
+  list.textContent='加载中...';
+  list.style.color='#888';
+  list.style.textAlign='center';
+  list.style.padding='20px 16px';
+  panel.appendChild(header);
+  panel.appendChild(list);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  // 加载角色卡数据
+  apiJson('/api/web/character-selector').then(function(data){
+    list.innerHTML='';
+    // 群组
+    if(data.groups&&data.groups.length>0){
+      var secTitle=document.createElement('div');
+      secTitle.textContent='群组';
+      secTitle.style.cssText='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 4px';
+      list.appendChild(secTitle);
+      data.groups.forEach(function(g){
+        var item=createSelectorItem(g.name,'群组 · '+g.member_count+'个成员',function(){
+          switchCharacterCard({type:'character_group',id:g.id});
+          overlay.remove();
+          characterSelectorLoading=false;
+        },g.avatar_url);
+        list.appendChild(item);
+      });
+    }
+    // 角色卡
+    if(data.cards&&data.cards.length>0){
+      var secTitle2=document.createElement('div');
+      secTitle2.textContent='角色卡';
+      secTitle2.style.cssText='font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;padding:8px 16px 4px';
+      list.appendChild(secTitle2);
+      data.cards.forEach(function(c){
+        var item=createSelectorItem(c.name,c.description||'',function(){
+          switchCharacterCard({type:'character_card',id:c.id});
+          overlay.remove();
+          characterSelectorLoading=false;
+        },c.avatar_url);
+        list.appendChild(item);
+      });
+    }
+    if((!data.groups||data.groups.length===0)&&(!data.cards||data.cards.length===0)){
+      list.innerHTML='<div style="text-align:center;padding:20px;color:#888">暂无可用角色卡</div>';
+    }
+  }).catch(function(e){
+    list.textContent='加载失败: '+e.message;
+    list.style.color='#f66';
+    characterSelectorLoading=false;
+  });
+}
+function createSelectorItem(name,desc,onClick,avatarUrl){
+  var item=document.createElement('div');
+  item.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-radius:0';
+  item.onmouseenter=function(){item.style.background='#222'};
+  item.onmouseleave=function(){item.style.background='transparent'};
+  item.onclick=onClick;
+  var avatar=document.createElement('div');
+  avatar.style.cssText='width:36px;height:36px;border-radius:8px;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-size:16px;color:#888;flex-shrink:0;overflow:hidden';
+  if(avatarUrl){
+    var img=document.createElement('img');
+    img.src=avatarUrl;
+    img.style.cssText='width:100%;height:100%;object-fit:cover';
+    avatar.appendChild(img);
+  }else{
+    avatar.textContent='👤';
+  }
+  var textArea=document.createElement('div');
+  textArea.style.cssText='flex:1;min-width:0';
+  var nameEl=document.createElement('div');
+  nameEl.textContent=name;
+  nameEl.style.cssText='font-size:14px;font-weight:600;color:#d4d4d4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  var descEl=document.createElement('div');
+  descEl.textContent=desc||'';
+  descEl.style.cssText='font-size:12px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  textArea.appendChild(nameEl);
+  textArea.appendChild(descEl);
+  item.appendChild(avatar);
+  item.appendChild(textArea);
+  return item;
+}
+async function switchCharacterCard(target){
+  try{
+    await apiJson('/api/web/active-prompt',{method:'POST',body:JSON.stringify(target)});
+    // 发一条系统消息
+    var typeLabel=target.type==='character_card'?'角色卡':'群组';
+    var sysMsg={id:'sys'+Date.now(),sender:'system',content_raw:'已切换'+typeLabel+' (ID: '+target.id+')'};
+    messages.push(sysMsg);
+    renderMessages();
+    scrollBottom();
+  }catch(e){
+    var errMsg={id:'err'+Date.now(),sender:'system',content_raw:'切换角色卡失败: '+e.message};
+    messages.push(errMsg);
+    renderMessages();
+    scrollBottom();
   }
 }
 
