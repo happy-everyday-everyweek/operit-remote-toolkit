@@ -4,6 +4,7 @@ import socketserver
 import urllib.request
 import urllib.parse
 import os
+import socket
 
 PORT = 8924
 API_HOST = 'http://127.0.0.1:8094'
@@ -234,13 +235,20 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(f'Proxy error: {e}'.encode())
 
+
+class ReuseServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+    def server_bind(self):
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        socketserver.ThreadingTCPServer.server_bind(self)
+
 if __name__ == '__main__':
     os.chdir(DIR)
     # 主端口 8924（本机访问）
-    main_server = socketserver.ThreadingTCPServer(('0.0.0.0', 8924), ProxyHandler)
+    main_server = ReuseServer(('0.0.0.0', 8924), ProxyHandler)
     # 尝试额外监听 8094（对外可访问端口），被占就跳过
     try:
-        ext_server = socketserver.ThreadingTCPServer(('0.0.0.0', 8094), ProxyHandler)
+        ext_server = ReuseServer(('0.0.0.0', 8094), ProxyHandler)
         import threading
         t = threading.Thread(target=ext_server.serve_forever, daemon=True)
         t.start()
