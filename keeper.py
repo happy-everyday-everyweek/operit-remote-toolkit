@@ -634,13 +634,19 @@ class Handler(BaseHTTPRequestHandler):
 <script>
 (function(){
   var PROXY = ''' + json.dumps(proxy_base) + ''';
+  var _currentUrl = window.location.href;
+  function notifyParent(url){
+    if(url && url !== _currentUrl){
+      _currentUrl = url;
+      parent.postMessage({type:'url-change',url:url}, '*');
+    }
+  }
   // 拦截链接点击
   document.addEventListener('click', function(e){
     var a = e.target.closest('a');
     if(!a || !a.href) return;
     var href = a.getAttribute('href');
     if(!href || href.startsWith('#') || href.startsWith('javascript:')) return;
-    // 已经是代理链接则跳过
     if(a.href.startsWith(PROXY)) return;
     e.preventDefault();
     window.location.href = PROXY + encodeURIComponent(a.href);
@@ -663,6 +669,53 @@ class Handler(BaseHTTPRequestHandler):
     }
     return origOpen.call(window, url, name, features);
   };
+  // 劫持 history.pushState / replaceState
+  var _origPushState = history.pushState;
+  var _origReplaceState = history.replaceState;
+  history.pushState = function(state, title, url){
+    _origPushState.call(this, state, title, url);
+    notifyParent(window.location.href);
+  };
+  history.replaceState = function(state, title, url){
+    _origReplaceState.call(this, state, title, url);
+    notifyParent(window.location.href);
+  };
+  window.addEventListener('popstate', function(){
+    notifyParent(window.location.href);
+  });
+  // 劫持 location.href 赋值
+  var _loc = window.location;
+  Object.defineProperty(_loc, 'href', {
+    set: function(val){
+      if(!val.startsWith(PROXY) && !val.startsWith('#') && !val.startsWith('javascript:')){
+        val = PROXY + encodeURIComponent(val);
+      }
+      notifyParent(val);
+      _loc.assign(val);
+    },
+    get: function(){ return _loc.href; }
+  });
+  // 劫持 location.assign / location.replace
+  var _origAssign = _loc.assign;
+  var _origReplace = _loc.replace;
+  _loc.assign = function(url){
+    if(url && !url.startsWith(PROXY) && !url.startsWith('#') && !url.startsWith('javascript:')){
+      url = PROXY + encodeURIComponent(url);
+    }
+    notifyParent(url);
+    _origAssign.call(_loc, url);
+  };
+  _loc.replace = function(url){
+    if(url && !url.startsWith(PROXY) && !url.startsWith('#') && !url.startsWith('javascript:')){
+      url = PROXY + encodeURIComponent(url);
+    }
+    notifyParent(url);
+    _origReplace.call(_loc, url);
+  };
+  // 页面完全加载后通知父页面当前 URL
+  window.addEventListener('load', function(){ notifyParent(window.location.href); });
+  if(document.readyState === 'complete'){ notifyParent(window.location.href); }
+  else { document.addEventListener('DOMContentLoaded', function(){ notifyParent(window.location.href); }); }
 })();
 </script>
 '''

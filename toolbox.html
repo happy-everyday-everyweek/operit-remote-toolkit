@@ -7,20 +7,21 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#fff;color:#222;font-size:14px;overflow:hidden}
-.tabs{display:flex;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:100}
-.tab{flex:1;text-align:center;padding:10px 0;cursor:pointer;font-size:14px;font-weight:500;color:#999;border-bottom:2px solid transparent;transition:none}
-.tab.active{color:#222;border-bottom-color:#222}
-.panel{display:none;height:calc(100vh - 38px);flex-direction:column}
-.panel.active{display:flex}
-.browser-bar{display:flex;gap:6px;padding:8px 10px;background:#f8f8f8;border-bottom:1px solid #eee;align-items:center}
-.browser-bar input{flex:1;height:34px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:14px;outline:none;background:#fff;color:#222;min-width:0}
+
+/* ===== 地址栏行 ===== */
+.browser-bar{display:flex;gap:4px;padding:6px 8px;background:#f8f8f8;border-bottom:1px solid #eee;align-items:center}
+.nav-btn{width:32px;height:32px;padding:0;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#555;font-size:14px;font-weight:600;user-select:none}
+.nav-btn:active{background:#eee}
+.nav-btn:disabled{opacity:0.3;cursor:default}
+.nav-btn svg{fill:#555;width:16px;height:16px}
+.browser-bar input{flex:1;height:32px;padding:0 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;outline:none;background:#fff;color:#222;min-width:0}
 .browser-bar input:focus{border-color:#222}
-#go-btn{height:34px;padding:0 14px;background:#222;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center}
+#go-btn{height:32px;padding:0 12px;background:#222;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center}
 #go-btn:active{opacity:0.8}
-.menu-group{position:relative;flex-shrink:0;display:flex;align-items:center;height:34px}
-.menu-btn{width:34px;height:34px;padding:0;background:#222;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.menu-group{position:relative;flex-shrink:0;display:flex;align-items:center;height:32px}
+.menu-btn{width:32px;height:32px;padding:0;background:#222;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .menu-btn:active{opacity:0.8}
-.menu-btn svg{fill:#fff;width:18px;height:18px}
+.menu-btn svg{fill:#fff;width:16px;height:16px}
 .menu-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:1000;min-width:160px;margin-top:4px;display:none}
 .menu-dropdown.show{display:block}
 .menu-dropdown .menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#222;border-bottom:1px solid #eee;white-space:nowrap}
@@ -31,48 +32,152 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Arial,sans-serif;back
 .menu-dropdown .zoom-slider input[type=range]{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:#ddd;border-radius:2px;outline:none}
 .menu-dropdown .zoom-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#222;border:none;cursor:pointer}
 .menu-dropdown .zoom-slider .zoom-val{font-size:12px;color:#666;min-width:36px;text-align:right;font-variant-numeric:tabular-nums}
-.section-title{font-size:12px;font-weight:600;color:#999;margin:10px 10px 4px;text-transform:uppercase;letter-spacing:0.5px}
-.quick-links{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px}
-.quick-link{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;background:#fff;border:1px solid #eee;border-radius:8px;text-decoration:none;color:#555;font-size:11px;cursor:pointer}
+
+/* ===== 加载进度条 ===== */
+.loading-bar-wrap{height:2px;background:#eee;overflow:hidden;position:relative}
+.loading-bar{height:100%;width:0%;background:#222;transition:width .3s ease;position:absolute;left:0;top:0}
+.loading-bar.active{width:60%}
+.loading-bar.done{width:100%;transition:width .15s ease}
+
+/* ===== 工具按钮行 ===== */
+.toolbar-row{display:flex;align-items:center;gap:4px;padding:4px 8px;border-bottom:1px solid #f0f0f0;flex-wrap:wrap}
+.tool-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid #eee;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#555;white-space:nowrap}
+.tool-btn:active{background:#f5f5f5}
+.tool-btn .icon{font-size:14px;font-weight:600;color:#222}
+.tool-divider{width:1px;height:18px;background:#eee;margin:0 2px;flex-shrink:0}
+
+/* ===== 快捷链接 ===== */
+.section-title{font-size:11px;font-weight:600;color:#999;margin:6px 10px 3px;text-transform:uppercase;letter-spacing:0.5px}
+.quick-links{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 8px 4px}
+.quick-link{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;background:#fff;border:1px solid #eee;border-radius:6px;text-decoration:none;color:#555;font-size:10px;cursor:pointer}
 .quick-link:active{background:#f5f5f5}
-.quick-link .icon{font-size:18px;font-weight:700;color:#222}
+.quick-link .icon{font-size:14px;font-weight:700;color:#222}
+
+/* ===== iframe ===== */
 .browser-frame{flex:1;overflow:hidden;position:relative;display:block;width:100%}
 .browser-wrapper{width:100%;height:100%}
 .browser-wrapper iframe{width:100%;height:100%;border:none;display:block}
-.calc{display:flex;flex-direction:column;height:100%;padding:10px}
-.calc-display{background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px 16px;margin-bottom:10px;min-height:80px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end}
-.calc-expr{font-size:13px;color:#999;min-height:18px;word-break:break-all;text-align:right;width:100%}
-#calc-result{font-size:28px;font-weight:300;color:#222;margin-top:4px}
-.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:1;align-content:start}
-.calc-grid button{height:48px;border:none;border-radius:8px;font-size:16px;cursor:pointer;background:#fff;color:#222;border:1px solid #ddd}
+
+/* ===== Overlay 面板 ===== */
+.overlay-mask{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.3);z-index:2000;justify-content:center;align-items:flex-start;padding-top:30px}
+.overlay-mask.show{display:flex}
+.overlay-panel{background:#fff;border-radius:12px;width:92%;max-width:420px;max-height:80vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:16px}
+.overlay-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #eee}
+.overlay-title{font-size:16px;font-weight:600;color:#222}
+.overlay-close{width:28px;height:28px;border:none;background:#f0f0f0;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#555}
+.overlay-close:active{background:#ddd}
+
+/* ===== 计算器 (overlay内) ===== */
+.calc-display{background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px 14px;margin-bottom:10px;min-height:64px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end}
+.calc-expr{font-size:12px;color:#999;min-height:16px;word-break:break-all;text-align:right;width:100%}
+#calc-result{font-size:26px;font-weight:300;color:#222;margin-top:4px}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.calc-grid button{height:44px;border:none;border-radius:6px;font-size:15px;cursor:pointer;background:#fff;color:#222;border:1px solid #ddd}
 .calc-grid button:active{background:#eee}
 .calc-grid .fn{color:#999}
 .calc-grid .op{color:#222;font-weight:700}
 .calc-grid .eq{background:#222;color:#fff;border-color:#222}
 .calc-grid .eq:active{opacity:0.85}
-/* 全屏模式：隐藏所有非浏览器UI，让iframe填满全屏 */
-.is-fullscreen body{overflow:hidden}
-.is-fullscreen .tabs{display:none}
-.is-fullscreen #panel-calc{display:none}
+
+/* ===== 笔记 (overlay内) ===== */
+#note-textarea{width:100%;height:180px;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;outline:none;color:#222}
+#note-textarea:focus{border-color:#222}
+.note-actions{display:flex;gap:6px;margin-top:8px}
+.note-actions button{padding:7px 14px;border-radius:6px;border:1px solid #ddd;font-size:12px;cursor:pointer;background:#fff;color:#222}
+.note-actions button:active{background:#eee}
+.note-actions .primary{background:#222;color:#fff;border-color:#222}
+
+/* ===== 全屏覆写：隐藏所有非浏览器UI，iframe填满全屏 ===== */
+.is-fullscreen .browser-bar{position:fixed;top:0;left:0;right:0;z-index:10000}
+.is-fullscreen .loading-bar-wrap{position:fixed;top:38px;left:0;right:0;z-index:10000}
+.is-fullscreen .toolbar-row{display:none}
 .is-fullscreen .section-title{display:none}
 .is-fullscreen .quick-links{display:none}
-.is-fullscreen .browser-frame{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999}
-.is-fullscreen .browser-frame iframe{width:100vw;height:100vh;transform:none}
-.is-fullscreen .browser-bar{position:fixed;top:0;left:0;right:0;z-index:10000}
-.is-fullscreen #panel-browser{padding-top:50px;height:100vh}
+.is-fullscreen .browser-frame{position:fixed;top:40px;left:0;width:100vw;height:calc(100vh - 40px);z-index:9999}
+.is-fullscreen .browser-frame iframe{width:100vw;height:calc(100vh - 40px);transform:none}
 .is-fullscreen .menu-dropdown{z-index:10001}
+
+/* ===== 面板容器 ===== */
+#panel-browser{display:flex;flex-direction:column;height:100vh}
 </style>
 </head>
 <body>
 
-<div class="tabs">
-  <div class="tab active" data-panel="calc">计算器</div>
-  <div class="tab" data-panel="browser">浏览器</div>
+<div id="panel-browser">
+  <!-- 地址栏行 -->
+  <div class="browser-bar">
+    <button class="nav-btn" id="btn-back" disabled title="后退">
+      <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-forward" disabled title="前进">
+      <svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-refresh" title="刷新">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+    </button>
+    <input id="url-input" type="text" placeholder="输入网址，例如 https://www.baidu.com">
+    <button id="go-btn">打开</button>
+    <div class="menu-group">
+      <button class="menu-btn" id="menu-btn" title="菜单">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <div class="menu-item" data-action="fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          全屏
+        </div>
+        <div class="menu-item" data-action="home">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          返回首页
+        </div>
+        <div class="menu-item" data-action="refresh">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          刷新
+        </div>
+        <div class="zoom-slider">
+          <span style="font-size:12px;color:#555">缩放</span>
+          <input type="range" id="zoom-slider" min="30" max="200" value="100">
+          <span class="zoom-val" id="zoom-val">100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载进度条 -->
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+
+  <!-- 工具按钮行 + 快捷链接 -->
+  <div class="toolbar-row">
+    <button class="tool-btn" id="tool-calc"><span class="icon">+</span>计算器</button>
+    <button class="tool-btn" id="tool-note"><span class="icon">N</span>笔记</button>
+    <div class="tool-divider"></div>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.baidu.com"><span class="icon">B</span>百度</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.bilibili.com"><span class="icon">B</span>B站</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.zhihu.com"><span class="icon">Z</span>知乎</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.google.com"><span class="icon">G</span>Google</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://github.com"><span class="icon">G</span>GitHub</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.wikipedia.org"><span class="icon">W</span>维基百科</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://stackoverflow.com"><span class="icon">S</span>Stack</a>
+    <a class="tool-btn" href="javascript:void 0" data-url="https://www.runoob.com"><span class="icon">R</span>菜鸟教程</a>
+  </div>
+
+  <!-- iframe 区域 -->
+  <div class="browser-frame" id="browser-frame">
+    <div class="browser-wrapper" id="browser-wrapper">
+      <iframe id="browser-iframe" loading="lazy"></iframe>
+    </div>
+  </div>
 </div>
 
-<!-- 计算器面板 -->
-<div class="panel active" id="panel-calc">
-  <div class="calc">
+<!-- 计算器 Overlay -->
+<div class="overlay-mask" id="calc-overlay">
+  <div class="overlay-panel">
+    <div class="overlay-header">
+      <div class="overlay-title">计算器</div>
+      <button class="overlay-close" id="calc-close">✕</button>
+    </div>
     <div class="calc-display">
       <div class="calc-expr" id="calc-expr"></div>
       <div id="calc-result">0</div>
@@ -102,71 +207,22 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Arial,sans-serif;back
   </div>
 </div>
 
-<!-- 浏览器面板 -->
-<div class="panel" id="panel-browser">
-  <div class="browser">
-    <div class="browser-bar">
-      <input id="url-input" type="text" placeholder="输入网址，例如 https://www.baidu.com">
-      <button id="go-btn">打开</button>
-      <div class="menu-group">
-        <button class="menu-btn" id="menu-btn" title="菜单">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
-        </button>
-        <div class="menu-dropdown" id="menu-dropdown">
-          <div class="menu-item" data-action="fullscreen">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-            全屏
-          </div>
-          <div class="menu-item" data-action="home">
-            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            返回首页
-          </div>
-          <div class="menu-item" data-action="refresh">
-            <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            刷新
-          </div>
-          <div class="zoom-slider">
-            <span style="font-size:12px;color:#555">缩放</span>
-            <input type="range" id="zoom-slider" min="30" max="200" value="100">
-            <span class="zoom-val" id="zoom-val">100%</span>
-          </div>
-        </div>
-      </div>
+<!-- 笔记 Overlay -->
+<div class="overlay-mask" id="note-overlay">
+  <div class="overlay-panel">
+    <div class="overlay-header">
+      <div class="overlay-title">记事本</div>
+      <button class="overlay-close" id="note-close">✕</button>
     </div>
-    <div class="section-title">快捷</div>
-    <div class="quick-links">
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.baidu.com"><span class="icon">B</span>百度</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.bilibili.com"><span class="icon">B</span>B站</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.zhihu.com"><span class="icon">Z</span>知乎</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.google.com"><span class="icon">G</span>Google</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://github.com"><span class="icon">G</span>GitHub</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.wikipedia.org"><span class="icon">W</span>维基百科</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://stackoverflow.com"><span class="icon">S</span>Stack</a>
-      <a class="quick-link" href="javascript:void 0" data-url="https://www.runoob.com"><span class="icon">R</span>菜鸟教程</a>
-    </div>
-    <div class="browser-frame" id="browser-frame">
-      <div class="browser-wrapper" id="browser-wrapper">
-        <iframe id="browser-iframe" loading="lazy"></iframe>
-      </div>
+    <textarea id="note-textarea" placeholder="写下你的笔记..."></textarea>
+    <div class="note-actions">
+      <button id="note-save" class="primary">保存</button>
+      <button id="note-clear">清空</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ===== 选项卡切换 ===== */
-var tabs=document.querySelectorAll('.tab');
-var panels={};
-tabs.forEach(function(tab){
-  var pid=tab.getAttribute('data-panel');
-  panels[pid]=document.getElementById('panel-'+pid);
-  tab.onclick=function(){
-    tabs.forEach(function(t){t.classList.remove('active')});
-    tab.classList.add('active');
-    for(var k in panels){panels[k].classList.remove('active')}
-    panels[pid].classList.add('active');
-  };
-});
-
 /* ===== 菜单下拉控制 ===== */
 var menuBtn=document.getElementById('menu-btn');
 var menuDropdown=document.getElementById('menu-dropdown');
@@ -180,34 +236,120 @@ document.addEventListener('click',function(e){
   }
 });
 
-/* ===== 浏览器 ===== */
+/* ===== 浏览器核心 ===== */
 var urlInput=document.getElementById('url-input');
 var goBtn=document.getElementById('go-btn');
 var browserIframe=document.getElementById('browser-iframe');
+var loadingBar=document.getElementById('loading-bar');
+var btnBack=document.getElementById('btn-back');
+var btnForward=document.getElementById('btn-forward');
+var btnRefresh=document.getElementById('btn-refresh');
+
+// 历史栈：用于外部前进/后退
+var _navStack={pages:[],index:-1};
+var _navStackDirty=false;
+
+function showLoading(active){
+  loadingBar.classList.remove('done');
+  if(active){ loadingBar.classList.add('active') }
+  else{ loadingBar.classList.remove('active'); loadingBar.classList.add('done') }
+}
 
 function navigateTo(url){
   if(!url||url.trim()==='')return;
   url=url.trim();
   if(!url.startsWith('http://')&&!url.startsWith('https://')){url='https://'+url}
-  var ql=document.querySelector('.quick-links');
-  var st=document.querySelector('.section-title');
-  if(ql) ql.style.display='none';
-  if(st) st.style.display='none';
-  var frame=document.getElementById('browser-frame');
-  if(frame) frame.style.flex='1';
+  var host=window.location.hostname||'192.168.1.140';
+  var proxyUrl='http://'+host+':8910/browse/'+encodeURIComponent(url);
+  urlInput.value=url;
+  showLoading(true);
+  browserIframe.src=proxyUrl;
+  // 压入导航历史（去重）
+  var last=_navStack.pages[_navStack.index];
+  if(last!==url){
+    // 如果当前不在栈顶，截断后面的
+    if(_navStack.index < _navStack.pages.length-1){
+      _navStack.pages=_navStack.pages.slice(0,_navStack.index+1);
+    }
+    _navStack.pages.push(url);
+    _navStack.index=_navStack.pages.length-1;
+    _navStackDirty=true;
+  }
+  updateNavButtons();
+}
+
+function updateNavButtons(){
+  btnBack.disabled=_navStack.index<=0;
+  btnForward.disabled=_navStack.index>=_navStack.pages.length-1;
+}
+
+// 前进/后退
+btnBack.onclick=function(){
+  if(_navStack.index<=0)return;
+  _navStack.index--;
+  var url=_navStack.pages[_navStack.index];
+  urlInput.value=url;
+  showLoading(true);
   var host=window.location.hostname||'192.168.1.140';
   browserIframe.src='http://'+host+':8910/browse/'+encodeURIComponent(url);
+  updateNavButtons();
+};
+btnForward.onclick=function(){
+  if(_navStack.index>=_navStack.pages.length-1)return;
+  _navStack.index++;
+  var url=_navStack.pages[_navStack.index];
   urlInput.value=url;
-}
+  showLoading(true);
+  var host=window.location.hostname||'192.168.1.140';
+  browserIframe.src='http://'+host+':8910/browse/'+encodeURIComponent(url);
+  updateNavButtons();
+};
+btnRefresh.onclick=function(){
+  var url=urlInput.value.trim();
+  if(url){ navigateTo(url) }
+};
 
 goBtn.onclick=function(){navigateTo(urlInput.value)};
 urlInput.onkeydown=function(e){if(e.key==='Enter'){navigateTo(urlInput.value)}};
 
-document.querySelectorAll('.quick-link').forEach(function(link){
-  link.onclick=function(){navigateTo(link.getAttribute('data-url'))};
+// 快捷链接/工具按钮点击导航
+document.querySelectorAll('.tool-btn[data-url]').forEach(function(btn){
+  btn.onclick=function(){navigateTo(btn.getAttribute('data-url'))};
 });
 
-/* ===== 全屏：优先 Fullscreen API，检测进入/退出切换 is-fullscreen 类 ===== */
+// iframe 加载完成 → 隐藏进度条
+browserIframe.onload=function(){
+  showLoading(false);
+};
+
+// 监听 postMessage（iframe 通知 URL 变更）
+window.addEventListener('message',function(e){
+  if(e.data && e.data.type==='url-change' && e.data.url){
+    // 提取原始 URL（去掉代理前缀）
+    var rawUrl=e.data.url;
+    var host=window.location.hostname||'192.168.1.140';
+    var prefix='http://'+host+':8910/browse/';
+    if(rawUrl.startsWith(prefix)){
+      rawUrl=decodeURIComponent(rawUrl.substring(prefix.length));
+    }
+    if(rawUrl!==urlInput.value){
+      urlInput.value=rawUrl;
+      // 同步压入历史
+      var last=_navStack.pages[_navStack.index];
+      if(last!==rawUrl){
+        if(_navStack.index < _navStack.pages.length-1){
+          _navStack.pages=_navStack.pages.slice(0,_navStack.index+1);
+        }
+        _navStack.pages.push(rawUrl);
+        _navStack.index=_navStack.pages.length-1;
+        _navStackDirty=true;
+        updateNavButtons();
+      }
+    }
+  }
+});
+
+/* ===== 全屏 ===== */
 function onFSChange(){
   if(document.fullscreenElement||document.webkitFullscreenElement){
     document.documentElement.classList.add('is-fullscreen');
@@ -234,19 +376,17 @@ document.querySelector('.menu-item[data-action="fullscreen"]').onclick=function(
     }
   }
 };
-/* ===== 返回首页（菜单项） ===== */
 document.querySelector('.menu-item[data-action="home"]').onclick=function(){
   navigateTo('https://www.baidu.com');
   menuDropdown.classList.remove('show');
 };
-/* ===== 刷新（菜单项） ===== */
 document.querySelector('.menu-item[data-action="refresh"]').onclick=function(){
   var url=urlInput.value.trim();
   if(url){navigateTo(url)}
   menuDropdown.classList.remove('show');
 };
 
-/* ===== 缩放控制（滑块） ===== */
+/* ===== 缩放 ===== */
 var zoomLevel=100;
 var zoomSlider=document.getElementById('zoom-slider');
 var zoomVal=document.getElementById('zoom-val');
@@ -256,17 +396,15 @@ zoomSlider.oninput=function(){
   applyZoom();
 };
 function applyZoom(){
-  var iframe=document.getElementById('browser-iframe');
-  if(!iframe)return;
   var frame=document.getElementById('browser-frame');
   if(!frame)return;
   var s=zoomLevel/100;
-  if(s===1){iframe.style.width='';iframe.style.height='';return}
+  if(s===1){browserIframe.style.width='';browserIframe.style.height='';return}
   var cw=frame.clientWidth;
   var ch=frame.clientHeight;
   if(cw===0||ch===0){setTimeout(applyZoom,200);return}
-  iframe.style.width=Math.round(cw*s)+'px';
-  iframe.style.height=Math.round(ch*s)+'px';
+  browserIframe.style.width=Math.round(cw*s)+'px';
+  browserIframe.style.height=Math.round(ch*s)+'px';
 }
 applyZoom();
 
@@ -369,11 +507,51 @@ function calcInput(action){
   }
 }
 
-document.querySelectorAll('.calc-grid button').forEach(function(btn){
+document.querySelectorAll('#calc-overlay .calc-grid button').forEach(function(btn){
   btn.onclick=function(){
     var action=this.getAttribute('data-action');
     calcInput(action);
   };
+});
+
+/* ===== 计算器 Overlay 控制 ===== */
+document.getElementById('tool-calc').onclick=function(){
+  document.getElementById('calc-overlay').classList.add('show');
+};
+document.getElementById('calc-close').onclick=function(){
+  document.getElementById('calc-overlay').classList.remove('show');
+};
+
+/* ===== 笔记 Overlay 控制 ===== */
+document.getElementById('tool-note').onclick=function(){
+  document.getElementById('note-overlay').classList.add('show');
+};
+document.getElementById('note-close').onclick=function(){
+  document.getElementById('note-overlay').classList.remove('show');
+};
+// 笔记：保存到 localStorage，清空
+document.getElementById('note-save').onclick=function(){
+  var val=document.getElementById('note-textarea').value;
+  localStorage.setItem('toolbox_note',val);
+  document.getElementById('note-overlay').classList.remove('show');
+};
+document.getElementById('note-clear').onclick=function(){
+  if(confirm('确定清空笔记？')){
+    document.getElementById('note-textarea').value='';
+    localStorage.setItem('toolbox_note','');
+  }
+};
+// 加载已保存的笔记
+(function(){
+  var saved=localStorage.getItem('toolbox_note');
+  if(saved) document.getElementById('note-textarea').value=saved;
+})();
+
+// 点击 mask 关闭 overlay
+document.querySelectorAll('.overlay-mask').forEach(function(mask){
+  mask.onclick=function(e){
+    if(e.target===mask){mask.classList.remove('show')}
+  }
 });
 
 /* ===== URL参数检测：自动加载 ===== */
@@ -382,22 +560,12 @@ document.querySelectorAll('.calc-grid button').forEach(function(btn){
   if(match){
     var url=decodeURIComponent(match[1]);
     if(url){
-      var bt=document.querySelector('[data-panel="browser"]');
-      if(bt) bt.click();
-      setTimeout(function(){
-        navigateTo(url);
-        var ql=document.querySelector('.quick-links');
-        var st=document.querySelector('.section-title');
-        if(ql) ql.style.display='none';
-        if(st) st.style.display='none';
-        var tabs=document.querySelector('.tabs');
-        if(tabs) tabs.style.display='none';
-      }, 100);
+      setTimeout(function(){navigateTo(url)},100);
     }
   }
 })();
 
-document.getElementById('url-input').focus();
+urlInput.focus();
 </script>
 </body>
 </html>
